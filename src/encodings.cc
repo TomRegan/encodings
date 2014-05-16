@@ -51,7 +51,7 @@ bytestream from_hex(std::string &hex_string) {
       if (masked_bits != 0) {
 	stream.push(masked_bits);
       }
-      bitmask = bitmask >> 8;
+      bitmask >>= 8;
     }
   }
   return stream;
@@ -64,7 +64,7 @@ void print_byte(uint8_t byte) {
   std::cout << '\n';
 }
 
-void print_quad(uint32_t bits) {
+void print_double(uint32_t bits) {
   for (uint32_t i = 0x80000000; i; i = i >> 1) {
     if (i == 0x80 || i == 0x8000 || i == 0x800000) {
       std::cout << ' ';
@@ -79,20 +79,6 @@ void print_quad(uint32_t bits) {
 
 namespace base64 {
 
-uint8_t pop_octet(binary::bytestream &stream) {
-  if (stream.num_bytes() == 0) {
-    return 0;
-  }
-  return stream.pop();
-}
-
-uint32_t build_array(binary::bytestream &stream) {
-  uint32_t array = pop_octet(stream) << 16;
-  array = array | pop_octet(stream) << 8;
-  array = array | pop_octet(stream);
-  return array;
-}
-
 uint8_t to_byte(uint8_t byte) {
   if (byte == '+') {
     return 62;
@@ -100,10 +86,10 @@ uint8_t to_byte(uint8_t byte) {
     return 63;
   } else if (byte < 58) {
     return byte + 4;
-  } else if (byte < 90) {
+  } else if (byte < 91) {
     return byte - 65;
   }
-  return byte - 71;    // fingers crossed it's lower a case letter...
+  return byte - 71;
 }
 
 uint8_t from_byte(uint8_t byte) {
@@ -119,6 +105,20 @@ uint8_t from_byte(uint8_t byte) {
   return '/';
 }
 
+uint8_t pop_octet(binary::bytestream &stream) {
+  if (stream.num_bytes() == 0) {
+    return 0;
+  }
+  return stream.pop();
+}
+
+uint32_t build_array(binary::bytestream &stream) {
+  uint32_t array = pop_octet(stream) << 16;
+  array = array | pop_octet(stream) << 8;
+  array = array | pop_octet(stream);
+  return array;
+}
+
 std::string from_hex(std::string hex_string) {
   auto buffer = std::stringstream();
   auto stream = binary::from_hex(hex_string);
@@ -131,7 +131,7 @@ std::string from_hex(std::string hex_string) {
     uint32_t bounds_mask = 0xFC0000;
     for (uint32_t quad = 4; quad > offset ; --quad) {
       uint8_t byte = (array & bounds_mask) >> (quad - 1) * 6;
-      bounds_mask = bounds_mask >> 6;
+      bounds_mask >>= 6;
       buffer.put(from_byte(byte));
     }
   }
@@ -148,26 +148,26 @@ namespace hex {
 
 std::string from_base64(std::string base64_string) {
   auto buffer = std::stringstream();
-  uint32_t bitset = 0;
-  for (auto ch : base64_string) {
-    if (ch == '=') {
-      if ((bitset & 0x8) == 0x8) {  // is odd byte
-	bitset >>= 2;
-      } else {
-	while ((bitset & 1) ^ 1) {
-	  bitset >>= 1;
-	}
-      }
-      break;
+  while (base64_string.size()) {
+    // get part of the string to work on
+    std::string dword = base64_string.substr(0, 4);
+    base64_string.erase(0, 4);
+    // build an array
+    uint32_t bitset = base64::to_byte(dword[0]);
+    bitset <<=6;
+    bitset |= base64::to_byte(dword[1]);
+    bitset <<= 6;
+    bitset |= base64::to_byte(dword[2]);
+    bitset <<=6;
+    bitset |= base64::to_byte(dword[3]);
+    if (dword[2] == '=' && dword[3] == '=') {
+      bitset >>= 16;
     }
-    if (bitset > 0) {
-      bitset <<= 6;
+    else if (dword[3]  == '=') {
+      bitset >>= 8;
     }
-    bitset |= base64::to_byte(ch);
+    buffer << std::hex << bitset;
   }
-  std::cout << base64_string << '\t';
-  binary::print_quad(bitset);
-  buffer << std::hex << bitset;
   return buffer.str();
 }
 
