@@ -81,17 +81,13 @@ std::string from_hex(std::string hex_string) {
       bitset <<= 8;
     }
     uint8_t bytemask = 0x3f;
-    if (bitset & 0x00fc0000) {
-      buffer << from_byte((bitset >> 18) & bytemask);
-    }
-    if (bitset & 0x0003f000) {
-      buffer << from_byte((bitset >> 12) & bytemask) ;
-    }
+    buffer << from_byte((bitset >> 18) & bytemask);
+    buffer << from_byte((bitset >> 12) & bytemask);
     if (bitset & 0x00000fc0) {
       buffer << from_byte((bitset >> 6) & bytemask);
-    }
-    if (bitset & 0x0000003f) {
-      buffer << from_byte(bitset & bytemask);
+      if (bitset & 0x0000003f) {
+	buffer << from_byte(bitset & bytemask);
+      }
     }
     while (buffer.str().size() % 4) {
       buffer << '=';
