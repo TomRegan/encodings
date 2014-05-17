@@ -1,7 +1,8 @@
 # encodings #
 
-At the moment, it just contains a utility method for converting hex strings into
-base64.
+Encode hexadecimal _strings_ as base64.
+
+Encode base64 _strings_ as hexadecimal.
 
 ## Build  ##
 
