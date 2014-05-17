@@ -1,4 +1,4 @@
-# encodings # https://travis-ci.org/TomRegan/encodings.svg?branch=master
+# encodings ![](https://travis-ci.org/TomRegan/encodings.svg?branch=master)
 
 Encode hexadecimal _strings_ as base64.
 
