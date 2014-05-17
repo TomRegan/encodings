@@ -13,49 +13,14 @@
 //   limitations under the License.
 
 
-#include <iostream>
-#include <deque>
-#include <sstream>
-#include <bitset>
-
 #include "encodings.h"
+
 
 namespace encodings {
 
+
 namespace binary {
 
-class bytestream {
- public:
-  bytestream()
-    : stream_(std::deque<uint8_t>())
-  {}
-  size_t num_bytes() const {return stream_.size();}
-  bool has_bytes() const {return num_bytes() > 0;}
-  void push(const uint32_t bits) {stream_.push_back(bits);}
-  uint8_t pop() {
-      auto value = stream_.front();
-      stream_.pop_front();
-      return value;
-  }
- private:
-  std::deque<uint8_t> stream_;
-};
-
-bytestream from_hex(std::string &hex_string) {
-  auto stream = bytestream();
-  for (size_t pos = 0; pos < hex_string.size(); pos += 4) {
-    uint32_t quad = std::stoul(hex_string.substr(pos, 4), 0, 16);
-    uint32_t bitmask = 0xFF000000;
-    for (size_t it = 4; it; --it) {
-      uint32_t masked_bits = (quad & bitmask) >> (it - 1) * 8;
-      if (masked_bits != 0) {
-	stream.push(masked_bits);
-      }
-      bitmask >>= 8;
-    }
-  }
-  return stream;
-}
 
 void print_byte(uint8_t byte) {
   for (auto i = 0x80; i; i = i >> 1) {
@@ -74,10 +39,12 @@ void print_double(uint32_t bits) {
   std::cout << '\n';
 }
 
+
 }  // binary
 
 
 namespace base64 {
+
 
 uint8_t to_byte(uint8_t byte) {
   if (byte == '+') {
@@ -105,46 +72,40 @@ uint8_t from_byte(uint8_t byte) {
   return '/';
 }
 
-uint8_t pop_octet(binary::bytestream &stream) {
-  if (stream.num_bytes() == 0) {
-    return 0;
-  }
-  return stream.pop();
-}
-
-uint32_t build_array(binary::bytestream &stream) {
-  uint32_t array = pop_octet(stream) << 16;
-  array = array | pop_octet(stream) << 8;
-  array = array | pop_octet(stream);
-  return array;
-}
-
 std::string from_hex(std::string hex_string) {
   auto buffer = std::stringstream();
-  auto stream = binary::from_hex(hex_string);
-  size_t offset = 0;
-  while (stream.has_bytes()) {
-    if (stream.num_bytes() - 3 > stream.num_bytes()) {
-      offset =  2 - ((stream.num_bytes() - 1) % 3);
+  while (!hex_string.empty()) {
+    uint32_t bitset = std::stoul(hex_string.substr(0, 6), 0, 16);
+    hex_string.erase(0, 6);
+    while (!(bitset & 0x00ff0000)) {
+      bitset <<= 8;
     }
-    uint32_t array = build_array(stream);
-    uint32_t bounds_mask = 0xFC0000;
-    for (uint32_t quad = 4; quad > offset ; --quad) {
-      uint8_t byte = (array & bounds_mask) >> (quad - 1) * 6;
-      bounds_mask >>= 6;
-      buffer.put(from_byte(byte));
+    uint8_t bytemask = 0x3f;
+    if (bitset & 0x00fc0000) {
+      buffer << from_byte((bitset >> 18) & bytemask);
     }
-  }
-  for (int i = 0; i < offset; i++) {
-    buffer.put('=');
+    if (bitset & 0x0003f000) {
+      buffer << from_byte((bitset >> 12) & bytemask) ;
+    }
+    if (bitset & 0x00000fc0) {
+      buffer << from_byte((bitset >> 6) & bytemask);
+    }
+    if (bitset & 0x0000003f) {
+      buffer << from_byte(bitset & bytemask);
+    }
+    while (buffer.str().size() % 4) {
+      buffer << '=';
+    }
   }
   return buffer.str();
 }
+
 
 }  // base64
 
 
 namespace hex {
+
 
 std::string from_base64(std::string base64_string) {
   auto buffer = std::stringstream();
@@ -170,6 +131,7 @@ std::string from_base64(std::string base64_string) {
   }
   return buffer.str();
 }
+
 
 }  // hex
 

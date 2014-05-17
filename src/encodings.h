@@ -13,9 +13,11 @@
 //   limitations under the License.
 
 
-#ifndef APPLICATION_H_
-#define APPLICATION_H_
+#ifndef ENCODINGS_H_
+#define ENCODINGS_H_
 
+#include <sstream>
+#include <iostream>
 #include <string>
 
 namespace encodings {
@@ -35,4 +37,4 @@ std::string from_hex(std::string);
 
 }  // encodings
 
-#endif  // APPLICATION_H_
+#endif  // ENCODINGS_H_
