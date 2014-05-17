@@ -73,7 +73,7 @@ uint8_t from_byte(uint8_t byte) {
 }
 
 std::string from_hex(std::string hex_string) {
-  auto buffer = std::stringstream();
+  std::stringstream buffer;
   while (!hex_string.empty()) {
     uint32_t bitset = std::stoul(hex_string.substr(0, 6), 0, 16);
     hex_string.erase(0, 6);
@@ -104,7 +104,7 @@ namespace hex {
 
 
 std::string from_base64(std::string base64_string) {
-  auto buffer = std::stringstream();
+  std::stringstream buffer;
   while (base64_string.size()) {
     std::string dword = base64_string.substr(0, 4);
     base64_string.erase(0, 4);
