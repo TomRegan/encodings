@@ -15,7 +15,6 @@
 
 #include "encodings.h"
 
-
 namespace encodings {
 
 
@@ -23,14 +22,14 @@ namespace binary {
 
 
 void print_byte(uint8_t byte) {
-  for (auto i = 0x80; i; i = i >> 1) {
+  for (auto i = 0x80; i; i >>= 1) {
     std::cout << (((byte & i) == i) ? "1" : "0");
   }
   std::cout << '\n';
 }
 
 void print_double(uint32_t bits) {
-  for (uint32_t i = 0x80000000; i; i = i >> 1) {
+  for (auto i = 0x80000000; i; i >>= 1) {
     if (i == 0x80 || i == 0x8000 || i == 0x800000) {
       std::cout << ' ';
     }
@@ -60,6 +59,7 @@ uint8_t to_byte(uint8_t byte) {
 }
 
 uint8_t from_byte(uint8_t byte) {
+  byte &= 0x3f;
   if (byte < 26) {
     return byte + 65;  // ascii A
   } else if (byte < 52) {
@@ -80,13 +80,12 @@ std::string from_hex(std::string hex_string) {
     while (!(bitset & 0x00ff0000)) {
       bitset <<= 8;
     }
-    uint8_t bytemask = 0x3f;
-    buffer << from_byte((bitset >> 18) & bytemask);
-    buffer << from_byte((bitset >> 12) & bytemask);
+    buffer << from_byte(bitset >> 18);
+    buffer << from_byte(bitset >> 12);
     if (bitset & 0x00000fc0) {
-      buffer << from_byte((bitset >> 6) & bytemask);
+      buffer << from_byte(bitset >> 6);
       if (bitset & 0x0000003f) {
-	buffer << from_byte(bitset & bytemask);
+	buffer << from_byte(bitset);
       }
     }
   }
