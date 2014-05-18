@@ -89,9 +89,9 @@ std::string from_hex(std::string hex_string) {
 	buffer << from_byte(bitset & bytemask);
       }
     }
-    while (buffer.str().size() % 4) {
-      buffer << '=';
-    }
+  }
+  while (buffer.str().size() % 4) {
+    buffer << '=';
   }
   return buffer.str();
 }
@@ -105,7 +105,7 @@ namespace hex {
 
 std::string from_base64(std::string base64_string) {
   std::stringstream buffer;
-  while (base64_string.size()) {
+  while (!base64_string.empty()) {
     std::string dword = base64_string.substr(0, 4);
     base64_string.erase(0, 4);
     uint32_t bitset = base64::to_byte(dword[0]);
