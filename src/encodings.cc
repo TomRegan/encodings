@@ -107,18 +107,15 @@ std::string from_base64(std::string base64_string) {
   while (!base64_string.empty()) {
     std::string dword = base64_string.substr(0, 4);
     base64_string.erase(0, 4);
-    uint32_t bitset = base64::to_byte(dword[0]);
-    bitset <<=6;
-    bitset |= base64::to_byte(dword[1]);
-    bitset <<= 6;
-    bitset |= base64::to_byte(dword[2]);
-    bitset <<=6;
+    uint32_t bitset = base64::to_byte(dword[0]) << 18;
+    bitset |= base64::to_byte(dword[1]) << 12;
+    bitset |= base64::to_byte(dword[2]) << 6;
     bitset |= base64::to_byte(dword[3]);
-    if (dword[2] == '=' && dword[3] == '=') {
-      bitset >>= 16;
-    }
-    else if (dword[3]  == '=') {
+    if (dword[3] == '=') {
       bitset >>= 8;
+      if (dword[2] == '=') {
+	bitset >>=8;
+      }
     }
     buffer << std::hex << bitset;
   }
